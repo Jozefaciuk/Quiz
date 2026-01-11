@@ -1,0 +1,177 @@
+let questions = [];
+let isDarkMode = false;
+
+function toggleTheme() {
+	isDarkMode = !isDarkMode;
+	document.documentElement.setAttribute(
+		"data-theme",
+		isDarkMode ? "dark" : "light",
+	);
+	document.querySelector(".theme-toggle").innerText = isDarkMode
+		? "Switch to Light Mode"
+		: "Switch to Dark Mode";
+}
+
+function shuffleArray(array) {
+	for (let i = array.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[array[i], array[j]] = [array[j], array[i]];
+	}
+}
+
+const cat = (f) =>
+  new Promise(resolve => Object.assign(new FileReader(), {onload(){resolve(this.result)}}).readAsText(f));
+
+async function loadQuiz() {
+	const start = parseInt(document.getElementById("start").value, 10);
+	const end = parseInt(document.getElementById("end").value, 10);
+    const file = document.getElementById("file-input").files[0];
+	const quizContainer = document.getElementById("quiz-container");
+	const errorContainer = document.getElementById("error-container");
+	quizContainer.innerHTML = "";
+	errorContainer.style.display = "none";
+
+	try {
+        if (!file){
+            throw new Error("No file selected");
+        }
+
+		questions = JSON.parse(await cat(file));
+		const filteredQuestions = questions.filter(
+			(q) => q.number >= start && q.number <= end,
+		);
+
+		if (filteredQuestions.length === 0) {
+			throw new Error(`No questions found in the range ${start} to ${end}.`);
+		}
+
+		shuffleArray(filteredQuestions);
+
+		filteredQuestions.forEach((q) => {
+			shuffleArray(q.answers); // Shuffle the answers
+
+			const questionDiv = document.createElement("div");
+			questionDiv.classList.add("card");
+			questionDiv.id = `q${q.number}`;
+
+			const questionTitle = document.createElement("h3");
+			questionTitle.innerHTML = `${q.description}`; // Hide question number initially
+			questionTitle.setAttribute("data-question-number", q.number);
+			questionDiv.appendChild(questionTitle);
+
+			const form = document.createElement("form");
+			form.onsubmit = (event) => handleSubmit(event, q.number);
+
+			const optionsList = document.createElement("ul");
+			optionsList.classList.add("options");
+
+			q.answers.forEach((answer) => {
+				const listItem = document.createElement("li");
+				const label = document.createElement("label");
+				const input = document.createElement("input");
+				input.type = "checkbox";
+				input.name = `q${q.number}`;
+				input.value = answer.content;
+				label.appendChild(input);
+				label.innerHTML += ` ${answer.content}`;
+				listItem.appendChild(label);
+				optionsList.appendChild(listItem);
+			});
+
+			form.appendChild(optionsList);
+
+			const submitButton = document.createElement("button");
+			submitButton.type = "submit";
+			submitButton.classList.add("submit-btn");
+			submitButton.innerText = "Submit";
+			form.appendChild(submitButton);
+
+			const resultDiv = document.createElement("div");
+			resultDiv.classList.add("result");
+			resultDiv.id = `result-q${q.number}`;
+			form.appendChild(resultDiv);
+
+			questionDiv.appendChild(form);
+			quizContainer.appendChild(questionDiv);
+		});
+
+		// Add Final Submit Button
+		const finalSubmitButton = document.createElement("button");
+		finalSubmitButton.classList.add("submit-btn");
+		finalSubmitButton.innerText = "Final Submit";
+		finalSubmitButton.onclick = handleFinalSubmit;
+		quizContainer.appendChild(finalSubmitButton);
+
+		// Container for incorrect questions
+		const finalResultDiv = document.createElement("div");
+		finalResultDiv.id = "final-result";
+		finalResultDiv.classList.add("card");
+		finalResultDiv.style.display = "none";
+		quizContainer.appendChild(finalResultDiv);
+	} catch (error) {
+		errorContainer.style.display = "block";
+		errorContainer.innerHTML = error.message;
+	}
+}
+
+let incorrectQuestions = []; // Array to track incorrect answers
+
+function handleSubmit(event, questionId) {
+	event.preventDefault();
+	const form = event.target;
+	const selectedOptions = Array.from(
+		form.querySelectorAll(`input[name='q${questionId}']:checked`),
+	).map((opt) => opt.value);
+	const resultDiv = document.getElementById(`result-q${questionId}`);
+	const allOptions = form.querySelectorAll(`input[name='q${questionId}']`);
+	const questionTitle = form.closest(".card").querySelector("h3");
+
+	const correctAnswers = questions
+		.find((q) => q.number === questionId)
+		.answers.filter((a) => a.correct)
+		.map((a) => a.content);
+
+	allOptions.forEach((option) => {
+		const parentLabel = option.parentElement;
+		parentLabel.classList.remove("correct", "incorrect");
+		if (correctAnswers.includes(option.value)) {
+			parentLabel.classList.add("correct");
+		} else if (option.checked) {
+			parentLabel.classList.add("incorrect");
+		}
+	});
+
+	if (arraysEqual(selectedOptions, correctAnswers)) {
+		resultDiv.style.display = "block";
+		resultDiv.innerHTML = "Correct!";
+		incorrectQuestions = incorrectQuestions.filter((q) => q !== questionId); // Remove from incorrect list if answered correctly
+	} else {
+		resultDiv.style.display = "block";
+		resultDiv.innerHTML = "Incorrect!";
+		if (!incorrectQuestions.includes(questionId)) {
+			incorrectQuestions.push(questionId); // Track incorrect question
+		}
+	}
+
+	// Reveal the question number after submission
+	questionTitle.innerHTML = `Question ${questionTitle.getAttribute("data-question-number")}: ${questionTitle.innerHTML}`;
+}
+
+function handleFinalSubmit() {
+	const finalResultDiv = document.getElementById("final-result");
+	finalResultDiv.style.display = "block";
+
+	if (incorrectQuestions.length === 0) {
+		finalResultDiv.innerHTML =
+			"<strong>Congratulations!</strong> You answered all questions correctly!";
+	} else {
+		finalResultDiv.innerHTML = `<strong>Incorrect Questions:</strong> ${incorrectQuestions.join(", ")}`;
+	}
+}
+
+function arraysEqual(arr1, arr2) {
+	return (
+		arr1.length === arr2.length &&
+		arr1.sort().every((value, index) => value === arr2.sort()[index])
+	);
+}

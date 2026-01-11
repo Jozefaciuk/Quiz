@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        :root {
+            --background-color: #f9f9f9;
+            --text-color: #333;
+            --card-bg-color: #ffffff;
+            --card-border-color: #e0e0e0;
+            --button-bg-color: #007BFF;
+            --button-hover-color: #0056b3;
+            --correct-bg-color: #d4edda;
+            --correct-border-color: #28a745;
+            --incorrect-bg-color: #f8d7da;
+            --incorrect-border-color: #f5c6cb;
+        }
+
+        [data-theme="dark"] {
+            --background-color: #121212;
+            --text-color: #f0f0f0;
+            --card-bg-color: #1e1e1e;
+            --card-border-color: #333;
+            --button-bg-color: #1e88e5;
+            --button-hover-color: #1565c0;
+            --correct-bg-color: #355e3b;
+            --correct-border-color: #4caf50;
+            --incorrect-bg-color: #5a1e1e;
+            --incorrect-border-color: #f44336;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg-color);
+            border: 1px solid var(--card-border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            margin: 0 0 10px;
+        }
+
+        .options {
+            list-style: none;
+            padding: 0;
+        }
+
+        .options li {
+            margin-bottom: 10px;
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: var(--button-bg-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--button-hover-color);
+        }
+
+        .correct {
+            color: #155724;
+            background-color: var(--correct-bg-color);
+            border: 1px solid var(--correct-border-color);
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .incorrect {
+            color: #721c24;
+            background-color: var(--incorrect-bg-color);
+            border: 1px solid var(--incorrect-border-color);
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+	[data-theme="dark"] .correct {
+	    color: white !important;
+	}
+
+	[data-theme="dark"] .incorrect {
+	    color: grey !important; /* Light red text for dark mode */
+	}
+
+        .theme-toggle {
+            display: block;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: var(--button-bg-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--button-hover-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .submit-btn {
+                font-size: 14px;
+            }
+
+            .theme-toggle {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">Switch to Dark Mode</button>
+    <div class="container">
+        <div class="card">
+            <h1>Quiz</h1>
+            <label for="start">Start Question:</label>
+            <input type="number" id="start" min="1" max="198" value="1">
+            <label for="end">End Question:</label>
+            <input type="number" id="end" min="1" max="198" value="10">
+            <label for="file-input">Upload Questions JSON:</label>
+            <input type="file" id="file-input" accept="application/json" />
+            <button onclick="loadQuiz()" class="submit-btn">Load Quiz</button>
+        </div>
+        <div id="quiz-container"></div>
+        <div id="error-container" class="card" style="display: none;"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
